@@ -44,7 +44,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),
-                'location' => $request->fullUrl(),
+                // Keep the raw query string: fullUrl() sorts keys and drops repeated ones, so
+                // route() would not match window.location while the client hydrates.
+                'location' => $request->getSchemeAndHttpHost().$request->getBaseUrl().$request->getPathInfo()
+                    .(($query = $request->server('QUERY_STRING')) ? '?'.$query : ''),
             ],
         ];
     }

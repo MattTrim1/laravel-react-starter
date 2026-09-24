@@ -48,15 +48,25 @@ class HomePageTest extends TestCase
             );
     }
 
+    public function test_ziggy_location_keeps_the_raw_query_string(): void
+    {
+        // Must match window.location exactly, or route() differs between SSR and hydration.
+        $this->get('/?b=1&a=2&a=3')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('ziggy.location', url('/').'/?b=1&a=2&a=3')
+                ->etc()
+            );
+    }
+
     public function test_ziggy_is_not_resent_on_partial_reloads(): void
     {
-        $this->get(route('home'), [
-            'X-Inertia' => 'true',
-            'X-Inertia-Partial-Component' => 'welcome',
-            'X-Inertia-Partial-Data' => 'name',
-        ])
-            ->assertOk()
-            ->assertJsonPath('props.name', config('app.name'))
-            ->assertJsonMissingPath('props.ziggy');
+        $this->get(route('home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('ziggy.routes.home')
+                ->reloadOnly('name', fn (Assert $reload) => $reload
+                    ->where('name', config('app.name'))
+                    ->missing('ziggy')
+                )
+            );
     }
 }

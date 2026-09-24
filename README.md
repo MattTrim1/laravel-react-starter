@@ -17,7 +17,7 @@ A lean starting point for single-page apps built with **Laravel 12**, **Inertia.
 
 ## Requirements
 
-- PHP 8.2+ with the `mbstring`, `pdo_sqlite` and `fileinfo` extensions (`pcntl` is needed by `php artisan pail`, which `composer dev` runs; on Windows use WSL)
+- PHP 8.2+ with the `ctype`, `curl`, `dom`, `fileinfo`, `mbstring`, `openssl`, `pdo_sqlite`, `tokenizer` and `xml` extensions (`curl` is used by `php artisan inertia:start-ssr` / `inertia:stop-ssr`; `pcntl` is needed by `php artisan pail`, which `composer dev` runs; on Windows use WSL)
 - Composer 2
 - Node.js 22.13+ — the [`.nvmrc`](.nvmrc) pins the current LTS, so `nvm use` picks it up
 - SQLite (the default), or MySQL / MariaDB / PostgreSQL
@@ -158,14 +158,18 @@ SSR is optional. When `bootstrap/ssr/ssr.js` exists and the SSR server is reacha
 
 ```bash
 npm run build:ssr
-php artisan inertia:start-ssr   # listens on 127.0.0.1:13714
+php artisan inertia:start-ssr   # listens on port 13714; Laravel calls it at INERTIA_SSR_URL
 ```
 
-Or run `composer dev:ssr` to do both alongside the rest of the dev stack. The client hydrates server-rendered markup and falls back to a fresh render when there is none.
+Or run `composer dev:ssr`, which builds both bundles and starts the SSR server alongside the PHP server, queue worker and Pail. It does not run the Vite dev server, so there is no hot reloading: re-run it after changing front-end code.
+
+The client hydrates server-rendered markup and falls back to a fresh render when there is none.
 
 - Set `INERTIA_SSR_ENABLED=false` to turn SSR off in an environment, or delete `bootstrap/ssr` locally.
 - `route()` works during SSR: the SSR entry builds it from the shared `ziggy` prop. Other browser-only APIs (`window`, `document`, `localStorage`) must only be used in effects or event handlers.
-- In production, run the SSR server under a process monitor (Supervisor, systemd) with `NODE_ENV=production`, otherwise React uses its slower development build. For example, in a Supervisor program add `environment=NODE_ENV="production"`. Restart it on every deploy with `php artisan inertia:stop-ssr`.
+- In production, run the SSR server under a process monitor that restarts it whenever it exits, with `NODE_ENV=production` (otherwise React uses its slower development build). `inertia:start-ssr` exits with status 0 even when Node crashes or is stopped, so Supervisor needs `autorestart=true` (its default, `unexpected`, will not restart it) and systemd needs `Restart=always`. For example, a Supervisor program with `command=php /path/to/artisan inertia:start-ssr`, `autorestart=true` and `environment=NODE_ENV="production"`.
+- The SSR server binds to every network interface, and its `/render` and `/shutdown` endpoints are unauthenticated. In production, block port 13714 from outside the host (firewall or security group).
+- The SSR bundle imports `react`, `react-dom` and `@inertiajs/react` from `node_modules` at runtime, so keep `node_modules` on servers that run SSR.
 
 ## Testing
 
@@ -173,9 +177,11 @@ Or run `composer dev:ssr` to do both alongside the rest of the dev stack. The cl
 composer test
 ```
 
-Tests use an in-memory SQLite database (see `phpunit.xml`), so they never touch your development database, and they render pages without a Vite build. Assert on Inertia responses with `assertInertia()`:
+Tests use an in-memory SQLite database (see `phpunit.xml`) and render pages without a Vite build. A cached config would make Laravel ignore `phpunit.xml` and use your real database, so the base `TestCase` refuses to run in that case; `composer test` clears the config cache first. Assert on Inertia responses with `assertInertia()`:
 
 ```php
+use Inertia\Testing\AssertableInertia as Assert;
+
 $this->get(route('home'))
     ->assertOk()
     ->assertInertia(fn (Assert $page) => $page->component('welcome'));
@@ -209,13 +215,14 @@ npm ci
 npm run build          # or `npm run build:ssr` if you use SSR
 php artisan migrate --force
 php artisan optimize
+php artisan inertia:stop-ssr   # SSR only: the process monitor restarts it with the new bundle
 ```
 
 Before going live:
 
 - Set `APP_ENV=production`, `APP_DEBUG=false` and a real `APP_URL`, and serve the site over HTTPS with `SESSION_SECURE_COOKIE=true`.
 - Behind a load balancer or TLS-terminating proxy, trust it in `bootstrap/app.php` (for example `$middleware->trustProxies(at: '*')`, or specific IPs) so generated URLs use `https`.
-- If you add a Content Security Policy, call `Vite::useCspNonce()` and pass the nonce to Ziggy with `@routes(nonce: Vite::cspNonce())`.
+- If you add a Content Security Policy, call `Vite::useCspNonce()` and pass the nonce to Ziggy with `@routes(nonce: Vite::cspNonce())`. Inertia's progress bar injects an inline `<style>` without a nonce, so either allow it in `style-src` or set `includeCSS: false` in the `progress` options in `resources/js/app.tsx` and style `#nprogress` yourself. The layout also loads fonts from `https://fonts.bunny.net` (`style-src` and `font-src`).
 - Run a queue worker if you dispatch jobs, since `QUEUE_CONNECTION` defaults to `database`.
 
 ## Supported versions
