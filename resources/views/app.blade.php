@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    {{-- The SSR head (when available) must come first so its <title> wins over the fallback. --}}
+    @inertiaHead
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -11,8 +13,7 @@
 
     @routes
     @viteReactRefresh
-    @vite(['resources/sass/app.scss', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
-    @inertiaHead
+    @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
 </head>
 <body>
 @inertia
