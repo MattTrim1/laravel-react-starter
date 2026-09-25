@@ -17,7 +17,7 @@ A lean starting point for single-page apps built with **Laravel 12**, **Inertia.
 
 ## Requirements
 
-- PHP 8.2+ with the `ctype`, `curl`, `dom`, `fileinfo`, `mbstring`, `openssl`, `pdo_sqlite`, `tokenizer` and `xml` extensions (`curl` is used by `php artisan inertia:start-ssr` / `inertia:stop-ssr`; `pcntl` is needed by `php artisan pail`, which `composer dev` runs; on Windows use WSL)
+- PHP 8.2, 8.3, 8.4 or 8.5 with the `ctype`, `curl`, `dom`, `fileinfo`, `filter`, `iconv`, `mbstring`, `openssl`, `pdo_sqlite`, `phar`, `session`, `tokenizer`, `xml` and `xmlwriter` extensions. `curl` is used by `php artisan inertia:start-ssr` / `inertia:stop-ssr`, `pcntl` by `php artisan pail` (which `composer dev` runs) and `intl` by `php artisan db:show` / `db:table`. On Windows use WSL.
 - Composer 2
 - Node.js 22.13+ — the [`.nvmrc`](.nvmrc) pins the current LTS, so `nvm use` picks it up
 - SQLite (the default), or MySQL / MariaDB / PostgreSQL
@@ -61,6 +61,8 @@ Sessions, the cache and the queue use the database driver by default, so run the
 | `npm run lint`      | ESLint with `--fix` (`npm run lint:check` only checks)               |
 | `npm run format`    | Prettier (`npm run format:check` only checks)                        |
 | `npm run types`     | Type-checks with `tsc --noEmit`                                      |
+
+The Composer scripts run every PHP process on the PHP binary that runs Composer. To use a particular version when several are installed, run Composer with it, for example `php8.5 "$(command -v composer)" dev`.
 
 ## Project structure
 
@@ -198,12 +200,12 @@ $this->get(route('home'))
 
 GitHub Actions workflows in `.github/workflows` run on pushes to `main` and on pull requests:
 
-- `tests.yml` — the PHPUnit suite on PHP 8.2, 8.3, 8.4 and 8.5.
+- `tests.yml` — on PHP 8.2, 8.3, 8.4 and 8.5: installs dependencies, checks every locked package against that PHP version (`composer check-platform-reqs --lock`) and runs the PHPUnit suite with all errors and deprecations reported.
 - `lint.yml` — Pint, ESLint, Prettier, `tsc` and a client + SSR build.
 
 Dependabot (`.github/dependabot.yml`) opens weekly grouped pull requests for Composer and npm updates within the current major versions, and monthly ones for GitHub Actions.
 
-`composer.json` pins the platform PHP version to 8.2 so that `composer update` never locks packages that need a newer PHP than the project supports. Raise it together with the `php` requirement.
+`composer.json` pins the platform PHP version to 8.2 so that `composer update` never locks packages that need a newer PHP than the project supports. Raise it together with the `php` requirement. Because of the pin, `composer install` does not check the lock against your real PHP version; run `composer check-platform-reqs --lock` to do that, as CI does. Tests log PHP deprecations to stderr (see `phpunit.xml`), so new-version deprecations show up in the test output.
 
 ## Deploying
 
@@ -215,7 +217,7 @@ npm ci
 npm run build          # or `npm run build:ssr` if you use SSR
 php artisan migrate --force
 php artisan optimize
-php artisan inertia:stop-ssr   # SSR only: the process monitor restarts it with the new bundle
+php artisan inertia:stop-ssr --graceful   # SSR only: the process monitor restarts it with the new bundle
 ```
 
 Before going live:
@@ -227,4 +229,4 @@ Before going live:
 
 ## Supported versions
 
-This starter stays on Laravel 12, Inertia 2, React 19 and Vite 6. Laravel 12 receives security fixes until February 2027 and PHP 8.2 until the end of 2026, so plan the move to the next majors before then.
+This starter stays on Laravel 12, Inertia 2, React 19 and Vite 6, and supports PHP 8.2 to 8.5, all tested in CI. PHP 8.0 and 8.1 are not supported: they are past end of life, and Laravel 12 requires PHP 8.2. Laravel 12 receives security fixes until February 2027 and PHP 8.2 until the end of 2026, so plan the move to the next majors before then.

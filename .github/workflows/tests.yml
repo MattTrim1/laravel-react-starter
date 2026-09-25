@@ -34,6 +34,8 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, fileinfo
+          # setup-php defaults to php.ini-production, which hides E_DEPRECATED.
+          ini-values: error_reporting=E_ALL, display_errors=On
           coverage: none
 
       - name: Get Composer cache directory
@@ -49,6 +51,10 @@ jobs:
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
+
+      # composer.json pins the platform to PHP 8.2, so install alone never checks locked packages against this PHP version.
+      - name: Check platform requirements
+        run: composer check-platform-reqs --lock
 
       - name: Prepare environment
         run: |
