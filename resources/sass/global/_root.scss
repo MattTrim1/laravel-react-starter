@@ -1,0 +1,21 @@
+@use 'sass:meta';
+@use '../config';
+
+:root {
+    color-scheme: light dark;
+
+    // meta.inspect keeps the quotes that plain interpolation would strip from font names.
+    --font-sans: #{meta.inspect(config.$font-sans)};
+    --font-mono: #{meta.inspect(config.$font-mono)};
+    --radius: #{config.$radius};
+
+    @each $name, $value in config.$colors-light {
+        --color-#{$name}: #{$value};
+    }
+
+    @media (prefers-color-scheme: dark) {
+        @each $name, $value in config.$colors-dark {
+            --color-#{$name}: #{$value};
+        }
+    }
+}

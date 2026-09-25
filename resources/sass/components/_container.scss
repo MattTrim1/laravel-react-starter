@@ -1,0 +1,27 @@
+@use '../config';
+
+// Centred page column with vertical rhythm between its children.
+.container {
+    width: 100%;
+    max-width: config.$container-max;
+    margin-inline: auto;
+    padding: config.space(12) config.space(6);
+
+    > * + * {
+        margin-block-start: config.space(4);
+    }
+
+    > h2 {
+        margin-block-start: config.space(12);
+    }
+
+    > ol,
+    > ul:not([class]) {
+        padding-inline-start: config.space(6);
+    }
+}
+
+.lead {
+    color: var(--color-muted);
+    font-size: 1.125rem;
+}

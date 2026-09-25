@@ -1,2 +1,10 @@
-// TODO: set up all required directories
-// TODO: set up all required imports
+// Application stylesheet, imported by resources/js/app.tsx.
+//
+// Uses the Dart Sass module system (@use/@forward); @import is deprecated.
+//
+//   config/      design tokens and functions (emit no CSS)
+//   mixins/      reusable mixins (emit no CSS)
+//   global/      custom properties, reset and element defaults
+//   components/  class-based component styles
+@use 'global';
+@use 'components';

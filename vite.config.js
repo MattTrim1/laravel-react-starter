@@ -1,19 +1,21 @@
 import react from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
-import {
-    defineConfig
-} from 'vite';
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/sass/app.scss', 'resources/js/app.tsx'],
-            ssr: 'resources/js/ssr.jsx',
+            input: ['resources/js/app.tsx'],
+            ssr: 'resources/js/ssr.tsx',
             refresh: true,
         }),
         react(),
     ],
-    esbuild: {
-        jsx: 'automatic',
+    resolve: {
+        alias: {
+            // Ziggy's JS client ships with the Composer package rather than npm.
+            'ziggy-js': fileURLToPath(new URL('./vendor/tightenco/ziggy', import.meta.url)),
+        },
     },
 });

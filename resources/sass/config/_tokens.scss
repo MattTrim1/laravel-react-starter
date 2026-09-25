@@ -1,0 +1,51 @@
+// Design tokens. Compile-time values only: this module emits no CSS.
+@use 'sass:map';
+
+$font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+$font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+$breakpoints: (
+    sm: 40rem,
+    md: 48rem,
+    lg: 64rem,
+);
+
+$space: (
+    1: 0.25rem,
+    2: 0.5rem,
+    3: 0.75rem,
+    4: 1rem,
+    6: 1.5rem,
+    8: 2rem,
+    12: 3rem,
+);
+
+$radius: 0.5rem;
+$container-max: 64rem;
+
+// Exposed at runtime as --color-* custom properties (see global/_root.scss).
+$colors-light: (
+    bg: #fdfdfc,
+    surface: #ffffff,
+    text: #1b1b18,
+    muted: #62625b,
+    border: #e3e3e0,
+    accent: #c62a04,
+);
+
+$colors-dark: (
+    bg: #0a0a0a,
+    surface: #161615,
+    text: #ededec,
+    muted: #a1a09a,
+    border: #3e3e3a,
+    accent: #ff6a3d,
+);
+
+@function space($step) {
+    @if not map.has-key($space, $step) {
+        @error 'Unknown space step `#{$step}`. Expected one of #{map.keys($space)}.';
+    }
+
+    @return map.get($space, $step);
+}

@@ -1,0 +1,13 @@
+@use 'sass:map';
+@use '../config';
+
+// Mobile-first media query: @include mixins.up(md) { ... }
+@mixin up($name) {
+    @if not map.has-key(config.$breakpoints, $name) {
+        @error 'Unknown breakpoint `#{$name}`. Expected one of #{map.keys(config.$breakpoints)}.';
+    }
+
+    @media (min-width: map.get(config.$breakpoints, $name)) {
+        @content;
+    }
+}
